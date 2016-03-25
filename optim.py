@@ -70,8 +70,8 @@ def draw_plot(k, n, s):
             np.fill_diagonal(AL, np.random.uniform(1, i, n), wrap=True)
             A = V.dot(AL).dot(V.T)
             x, r, l = cg(matvec, B, X0, disp=True, trace=True)
-            print(color[c])
-            plt.semilogy(l['n_evals'], l['it'], color[c], label = 'CG' )
+
+            plt.semilogy(l['n_evals'], l['it'], color[c], label = 'CG' ,alpha = 0.8)
         c = c + 1
     plt.show()
 
