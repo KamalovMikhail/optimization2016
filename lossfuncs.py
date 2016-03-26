@@ -10,6 +10,21 @@ reg_coef = 0.5
 w = np.array([0, 0])
 
 
+sigma = spes.expit(-y * X.dot(w))
+
+d = sigma * (1 - sigma)
+
+
+AL = np.zeros((len(d), len(d)), float)
+np.fill_diagonal(AL, d, wrap=True)
+
+print(AL)
+
+print((1 / 4) * np.dot(X.T, AL).dot(X) + 0.5)
+
+
+
+
 def logistic(w, X, y, reg_coef, hess=False):
     yc = np.copy(y)
     Xk = np.copy(X)
@@ -17,15 +32,27 @@ def logistic(w, X, y, reg_coef, hess=False):
     n = len(yc)
 
     # function
-    fun_val = 1 / n * np.sum(np.log(1 + np.exp((-y * X.T[:]).T[:] * w)), axis=0) + (reg_coef / 2) * np.power(sp.norm(w), 2)
+    fun_val = 1 / n * np.sum(np.log(1 + np.exp((-y * X.T).T[:] * w)), axis=0) + (reg_coef / 2) * np.power(sp.norm(w), 2)
+
     # gradient
-    spec = spes.expit((-yc * Xk.T[:]).T[:] * wc)
-    sec = ((-yc * Xk.T[:]).T * (np.exp((-yc * Xk.T[:]).T[:] * wc)))
-    grad = 1 / n * np.sum((sec * spec), axis=0) + (reg_coef) * (sp.norm(wc))
+    sigma = spes.expit(-y * X.dot(w))
+    grad = 1 / n * np.sum((-y * X.T * sigma).T, axis=0) + reg_coef * sp.norm(wc)
 
-    return fun_val[0], grad
+    # hessian
+    if hess:
+        d = sigma * (1 - sigma)
+        D = np.zeros((len(d), len(d)), float)
+        np.fill_diagonal(D, d, wrap=True)
+        hessian = (1 / n) * np.dot(Xk.T, AL).dot(X) + reg_coef
 
-a,b = logistic(w, X, y, reg_coef)
+    if hess:
+        return fun_val[0], grad, hessian
+    else:
+        return fun_val[0], grad
 
-print("!!")
+a,b,h = logistic(w, X, y, reg_coef, hess=True)
+
+#print("!!")
 print(a, b)
+
+print(h)

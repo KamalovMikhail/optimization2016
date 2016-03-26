@@ -4,6 +4,7 @@ import scipy.linalg as sp
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
+from scipy.optimize.linesearch import line_search_wolfe2
 
 ## b = np.array([1, 6])
 ## x0 = np.array([0, 0])
@@ -21,9 +22,9 @@ def cg(matvec, b, x0, tol=1e-5, max_iter=None, disp=False, trace=False):
     n = len(xk) if (max_iter == None) else max_iter
 
     if trace:
-        hist = {'it': np.array([]), 'n_evals': np.array([])}
+        hist = {'it': np.array([]), 'norm_r': np.array([])}
         hist['it'] = np.append(hist['it'], k)
-        hist['n_evals'] = np.append(hist['n_evals'], nev)
+        hist['norm_r'] = np.append(hist['norm_r'], nev)
 
     if disp:
         print("%10s %15s" % ('iter', 'res_rat'))
@@ -43,7 +44,7 @@ def cg(matvec, b, x0, tol=1e-5, max_iter=None, disp=False, trace=False):
 
         if trace:
             hist['it'] = np.append(hist['it'], k)
-            hist['n_evals'] = np.append(hist['n_evals'], nev)
+            hist['norm_r'] = np.append(hist['norm_r'], nev)
 
         if nev <= tol:
             status = 0
@@ -55,6 +56,39 @@ def cg(matvec, b, x0, tol=1e-5, max_iter=None, disp=False, trace=False):
         return xk, status
 
 
+def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.9, disp=False, trace=False):
+    status = 1
+    x = np.copy(x0)
+    f, gradient = func(x)
+    direction = - gradient
+
+    for i in range(max_iter):
+        print(i)
+        alpha = line_search_wolfe2(f=func, myfprime=func, xk=x, pk=direction, c1=c1, c2=c2)
+        x = x - alpha * gradient
+        f, gradient = func(x)
+        direction = - gradient
+        if norm(gradient) < tol:
+            status = 0
+            break
+
+    return x, f, status
+
+
+def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.9,
+disp=False, trace=False):
+
+
+
+##A = np.array([[1, 0], [0, 2]])
+##b = np.array([1, 6])
+##c = 9.5
+##x0 = np.array([0, 0])
+##func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+
+##set_x, func, status = gd(func,x0)
+
+##print(set_x, func, status)
 
 def draw_plot(k, n, s):
     color = ['b', 'r', 'g']
@@ -71,12 +105,12 @@ def draw_plot(k, n, s):
             A = V.dot(AL).dot(V.T)
             x, r, l = cg(matvec, B, X0, disp=True, trace=True)
 
-            plt.semilogy(l['n_evals'], l['it'], color[c], label = 'CG' ,alpha = 0.8)
+            plt.semilogy(l['norm_r'], l['it'], color[c], label = 'CG' ,alpha = 0.8)
         c = c + 1
     plt.show()
 
 
-draw_plot([4, 14, 20], 10, 4)
+#draw_plot([4, 14, 20], 10, 4)
 
 
 
