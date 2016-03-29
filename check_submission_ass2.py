@@ -1,13 +1,14 @@
-__author__ = 'mikhail'
-
 import numpy as np
 from numpy.linalg import norm
 from numpy.testing import assert_equal, assert_almost_equal, assert_array_almost_equal
 import unittest
 from ddt import ddt, data, unpack
-from lossfuncs import logistic
+
 from io import StringIO
 import sys
+
+from lossfuncs import logistic
+
 from optim import cg, gd
 
 ############################################################################################################
@@ -57,6 +58,13 @@ class TestLogistic(unittest.TestCase):
         assert_almost_equal(f, 0.693, decimal=2)
         assert_array_almost_equal(g, [0, -0.25])
 
+    def test_hess(self):
+        """Check that Hessian is returned correctly when `hess=True`."""
+        f, g, H = logistic(w, X, y, reg_coef, hess=True)
+
+        self.assertTrue(isinstance(H, np.ndarray))
+
+        assert_array_almost_equal(H, [[0.625, 0.0625], [0.0625, 0.625]])
 
 ############################################################################################################
 ################################################# TestCG ###################################################
@@ -105,31 +113,6 @@ class TestCG(unittest.TestCase):
 
         self.assertTrue(isinstance(hist['norm_r'], np.ndarray))
 
-# Simple data
-X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-y = np.array([1, 1, -1, 1])
-reg_coef = 0.5
-w = np.array([0, 0])
-
-class TestLogistic(unittest.TestCase):
-    def test_default(self):
-        """Check if everything works correctly with default parameters."""
-        f, g = logistic(w, X, y, reg_coef)
-
-        self.assertTrue(isinstance(g, np.ndarray))
-
-        assert_almost_equal(f, 0.693, decimal=2)
-        assert_array_almost_equal(g, [0, -0.25])
-
-    def test_hess(self):
-        """Check that Hessian is returned correctly when `hess=True`."""
-        f, g, H = logistic(w, X, y, reg_coef, hess=True)
-
-        self.assertTrue(isinstance(H, np.ndarray))
-
-        assert_array_almost_equal(H, [[0.625, 0.0625], [0.0625, 0.625]])
-
-
 ############################################################################################################
 ############################################### TestOptim ##################################################
 ############################################################################################################
@@ -139,7 +122,6 @@ A = np.array([[1, 0], [0, 2]])
 b = np.array([1, 6])
 c = 9.5
 x0 = np.array([0, 0])
-
 func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
 func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
 # For this func |nabla f(x)| < tol ensures |f(x) - f(x^*)| < tol^2
@@ -147,7 +129,7 @@ func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
 testing_pairs = (
     annotated(gd, func),
     #annotated(ncg, func),
-    #annotated(newton, func_hess),
+    # annotated(newton, func_hess),
 )
 
 @ddt
@@ -238,9 +220,5 @@ class TestOptim(unittest.TestCase):
 ################################################## Main ####################################################
 ############################################################################################################
 
-
-
 if __name__ == '__main__':
     unittest.main()
-
-

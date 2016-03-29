@@ -10,17 +10,6 @@ reg_coef = 0.5
 w = np.array([0, 0])
 
 
-sigma = spes.expit(-y * X.dot(w))
-
-d = sigma * (1 - sigma)
-
-
-AL = np.zeros((len(d), len(d)), float)
-np.fill_diagonal(AL, d, wrap=True)
-
-print(AL)
-
-print((1 / 4) * np.dot(X.T, AL).dot(X) + 0.5)
 
 
 
@@ -36,14 +25,13 @@ def logistic(w, X, y, reg_coef, hess=False):
 
     # gradient
     sigma = spes.expit(-y * X.dot(w))
-    grad = 1 / n * np.sum((-y * X.T * sigma).T, axis=0) + reg_coef * sp.norm(wc)
+    grad = 1 / n * np.sum((-y * X.T * sigma).T, axis=0) + reg_coef * wc
 
     # hessian
     if hess:
         d = sigma * (1 - sigma)
-        D = np.zeros((len(d), len(d)), float)
-        np.fill_diagonal(D, d, wrap=True)
-        hessian = (1 / n) * np.dot(Xk.T, AL).dot(X) + reg_coef
+        D = np.diag(d)
+        hessian = (1 / n) * np.dot(Xk.T, D).dot(X) + np.diag((reg_coef + np.zeros(len(wc)) ))
 
     if hess:
         return fun_val[0], grad, hessian
@@ -53,6 +41,6 @@ def logistic(w, X, y, reg_coef, hess=False):
 a,b,h = logistic(w, X, y, reg_coef, hess=True)
 
 #print("!!")
-print(a, b)
+print(a, b,h)
 
 print(h)

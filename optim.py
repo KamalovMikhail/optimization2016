@@ -4,10 +4,11 @@ import scipy.linalg as sp
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from scipy.optimize.linesearch import line_search_wolfe2
+from scipy.optimize.linesearch import line_search_wolfe2,line_search_armijo
 
 ## b = np.array([1, 6])
 ## x0 = np.array([0, 0])
+
 
 
 
@@ -56,39 +57,54 @@ def cg(matvec, b, x0, tol=1e-5, max_iter=None, disp=False, trace=False):
         return xk, status
 
 
-def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.9, disp=False, trace=False):
-    status = 1
-    x = np.copy(x0)
-    f, gradient = func(x)
-    direction = - gradient
 
-    for i in range(max_iter):
-        print(i)
-        alpha = line_search_wolfe2(f=func, myfprime=func, xk=x, pk=direction, c1=c1, c2=c2)
-        x = x - alpha * gradient
-        f, gradient = func(x)
-        direction = - gradient
-        if norm(gradient) < tol:
+def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
+    status, x = 1, np.copy(x0)
+    f_0 = (lambda x: func(x)[0])
+    f_1 = (lambda x: func(x)[1])
+
+    f, gradient = func(x)
+    n_act_evals = 1
+
+    for k in range(max_iter):
+        if n_act_evals >= max_n_evals:
+            break
+        if norm(gradient, np.inf) < tol:
             status = 0
             break
+        direction = -gradient
+        alpha = line_search_wolfe2(f=f_0, myfprime=f_1, xk=x, pk=direction, c1=c1, c2=c2)
+        if alpha[0] is None:
+            alpha = line_search_armijo(f=f_0, xk=x, pk=direction, gfk=gradient, old_fval=f)
+
+        x = x - alpha[0] * gradient
+
+        f, gradient = func(x)
+        n_act_evals =+ 1
 
     return x, f, status
 
 
-def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.9,
-disp=False, trace=False):
 
 
 
-##A = np.array([[1, 0], [0, 2]])
-##b = np.array([1, 6])
-##c = 9.5
-##x0 = np.array([0, 0])
-##func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+#def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.9,
+#disp=False, trace=False):
 
-##set_x, func, status = gd(func,x0)
 
-##print(set_x, func, status)
+
+#A = np.array([[1, 0], [0, 2]])
+#b = np.array([1, 6])
+#c = 9.5
+#x0 = np.array([0, 0])
+
+#func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+
+
+#set_x, func, status = gd(func, x0)
+
+
+#print(set_x, func, status)
 
 def draw_plot(k, n, s):
     color = ['b', 'r', 'g']
