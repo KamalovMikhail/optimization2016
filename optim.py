@@ -75,12 +75,11 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
         print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
 
     if trace:
-        current_time = time.time() - start_time
         hist = {'f': np.array([]), 'norm_g': np.array([]), 'n_evals': np.array([]), 'elaps_t': np.array([])}
         hist['f'] = np.append(hist['f'], f)
         hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
         hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
-        hist['elaps_t'] = np.append(hist['elaps_t'], current_time)
+        hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
 
     for k in range(max_iter):
         if n_act_evals >= max_n_evals:
@@ -96,18 +95,17 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
         x = x + alpha[0] * direction
 
         f, gradient = func(x)
-        n_act_evals =+ 1
-        iter =+ 1
+        n_act_evals = n_act_evals + 1
+        iter = iter + 1
 
         gradient_norm = norm(gradient, np.inf)
         if disp:
             print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
         if trace:
-            current_time = time.time() - start_time
             hist['f'] = np.append(hist['f'], f)
             hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
             hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
-            hist['elaps_t'] = np.append(hist['elaps_t'], current_time)
+            hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
 
     if trace:
         return x, f, status, hist
@@ -116,6 +114,7 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
 
 
 def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
+    start_time = time.time()
     status, x = 1, np.copy(x0)
     f_0 = (lambda x: func(x)[0])
     f_1 = (lambda x: func(x)[1])
@@ -129,6 +128,14 @@ def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, 
     if disp:
         print("%10s %15s %15s %15s" % ('iter', 'oracul_coal', 'func', 'gradient_norm'))
         print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+
+    if trace:
+        hist = {'f': np.array([]), 'norm_g': np.array([]), 'n_evals': np.array([]), 'elaps_t': np.array([])}
+        hist['f'] = np.append(hist['f'], f)
+        hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+        hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+        hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
+
 
     for k in range(max_iter):
         if n_act_evals >= max_n_evals:
@@ -150,17 +157,26 @@ def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, 
 
         f, gradient, hessian = func(x)
         gradient_norm = norm(gradient, np.inf)
-        n_act_evals =+ 1
-        iter =+ 1
+        n_act_evals = n_act_evals + 1
+        iter = iter + 1
         if disp:
             print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
 
+        if trace:
+            hist['f'] = np.append(hist['f'], f)
+            hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+            hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+            hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
 
-    return x, f, status
+
+    if trace:
+        return x, f, status, hist
+    else:
+        return x, f, status
 
 
 def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
-    status, x = 1, np.copy(x0)
+    status, x, start_time = 1, np.copy(x0), time.time()
     f_0 = (lambda x: func(x)[0])
     f_1 = (lambda x: func(x)[1])
 
@@ -173,6 +189,12 @@ def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, dis
     if disp:
         print("%10s %15s %15s %15s" % ('iter', 'oracul_coal', 'func', 'gradient_norm'))
         print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+    if trace:
+        hist = {'f': np.array([]), 'norm_g': np.array([]), 'n_evals': np.array([]), 'elaps_t': np.array([])}
+        hist['f'] = np.append(hist['f'], f)
+        hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+        hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+        hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
 
 
     for k in range(max_iter):
@@ -188,18 +210,27 @@ def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, dis
         x = x + alpha[0] * direction
 
         f, gradient_k = func(x)
-        n_act_evals =+ 1
+        n_act_evals =n_act_evals + 1
         betta_k = (gradient_k.dot(gradient_k - gradient))/gradient.dot(gradient)
         direction = -gradient_k + betta_k * direction
         gradient = gradient_k
         gradient_norm = norm(gradient, np.inf)
-        iter =+ 1
+        iter = iter + 1
         if disp:
             print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+        if trace:
+            hist['f'] = np.append(hist['f'], f)
+            hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+            hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+            hist['elaps_t'] = np.append(hist['elaps_t'], time.time() - start_time)
 
 
 
-    return x, f, status
+
+    if trace:
+        return x, f, status, hist
+    else:
+        return x, f, status
 
 
 
@@ -216,15 +247,18 @@ def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, dis
 
 
 
-#A = np.array([[1, 0], [0, 2]])
-#b = np.array([1, 6])
-#c = 9.5
-#x0 = np.array([0, 0])
+A = np.array([[1, 0], [0, 2]])
+b = np.array([1, 6])
+c = 9.5
+x0 = np.array([0, 0])
 
-#func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
 
 
-#set_x, func, status = gd(func, x0)
+set_x, func, status, hist = gd(func, x0, disp=True, trace=True)
+
+
 
 
 #print(set_x, func, status)
