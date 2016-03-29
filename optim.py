@@ -4,6 +4,7 @@ import scipy.linalg as sp
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
+import time
 from scipy.optimize.linesearch import line_search_wolfe2,line_search_armijo
 
 ## b = np.array([1, 6])
@@ -59,17 +60,32 @@ def cg(matvec, b, x0, tol=1e-5, max_iter=None, disp=False, trace=False):
 
 
 def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
+    start_time = time.time()
     status, x = 1, np.copy(x0)
     f_0 = (lambda x: func(x)[0])
     f_1 = (lambda x: func(x)[1])
+    iter = 0
 
     f, gradient = func(x)
     n_act_evals = 1
+    gradient_norm = norm(gradient, np.inf)
+
+    if disp:
+        print("%10s %15s %15s %15s" % ('iter', 'oracul_coal', 'func', 'gradient_norm'))
+        print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+
+    if trace:
+        current_time = time.time() - start_time
+        hist = {'f': np.array([]), 'norm_g': np.array([]), 'n_evals': np.array([]), 'elaps_t': np.array([])}
+        hist['f'] = np.append(hist['f'], f)
+        hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+        hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+        hist['elaps_t'] = np.append(hist['elaps_t'], current_time)
 
     for k in range(max_iter):
         if n_act_evals >= max_n_evals:
             break
-        if norm(gradient, np.inf) < tol:
+        if gradient_norm < tol:
             status = 0
             break
         direction = -gradient
@@ -81,9 +97,22 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
 
         f, gradient = func(x)
         n_act_evals =+ 1
+        iter =+ 1
 
-    return x, f, status
+        gradient_norm = norm(gradient, np.inf)
+        if disp:
+            print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+        if trace:
+            current_time = time.time() - start_time
+            hist['f'] = np.append(hist['f'], f)
+            hist['norm_g'] = np.append(hist['norm_g'], gradient_norm)
+            hist['n_evals'] = np.append(hist['n_evals'], n_act_evals)
+            hist['elaps_t'] = np.append(hist['elaps_t'], current_time)
 
+    if trace:
+        return x, f, status, hist
+    else:
+        return x, f, status
 
 
 def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
@@ -91,15 +120,23 @@ def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, 
     f_0 = (lambda x: func(x)[0])
     f_1 = (lambda x: func(x)[1])
 
+    iter = 0
+
     f, gradient, hessian = func(x)
     n_act_evals = 1
+    gradient_norm = norm(gradient, np.inf)
+
+    if disp:
+        print("%10s %15s %15s %15s" % ('iter', 'oracul_coal', 'func', 'gradient_norm'))
+        print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
 
     for k in range(max_iter):
         if n_act_evals >= max_n_evals:
             break
-        if norm(gradient, np.inf) < tol:
+        if gradient_norm < tol:
             status = 0
             break
+
 
         B = sp.cho_factor(hessian, lower=True, overwrite_a=True)
         direction = sp.cho_solve(B, -gradient, overwrite_b=True)
@@ -112,9 +149,65 @@ def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, 
         x = x + alpha[0] * direction
 
         f, gradient, hessian = func(x)
+        gradient_norm = norm(gradient, np.inf)
         n_act_evals =+ 1
+        iter =+ 1
+        if disp:
+            print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+
 
     return x, f, status
+
+
+def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
+    status, x = 1, np.copy(x0)
+    f_0 = (lambda x: func(x)[0])
+    f_1 = (lambda x: func(x)[1])
+
+    f, gradient = func(x)
+    direction = -gradient
+    n_act_evals = 1
+    iter = 0
+    gradient_norm = norm(gradient, np.inf)
+
+    if disp:
+        print("%10s %15s %15s %15s" % ('iter', 'oracul_coal', 'func', 'gradient_norm'))
+        print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+
+
+    for k in range(max_iter):
+        if n_act_evals >= max_n_evals:
+            break
+        if norm(gradient, np.inf) < tol:
+            status = 0
+            break
+        alpha = line_search_wolfe2(f=f_0, myfprime=f_1, xk=x, pk=direction, c1=c1, c2=c2)
+        if alpha[0] is None:
+            alpha = line_search_armijo(f=f_0, xk=x, pk=direction, gfk=gradient, old_fval=f, c1=c1)
+
+        x = x + alpha[0] * direction
+
+        f, gradient_k = func(x)
+        n_act_evals =+ 1
+        betta_k = (gradient_k.dot(gradient_k - gradient))/gradient.dot(gradient)
+        direction = -gradient_k + betta_k * direction
+        gradient = gradient_k
+        gradient_norm = norm(gradient, np.inf)
+        iter =+ 1
+        if disp:
+            print("%10d %15d %15e %15e" % (iter, n_act_evals, f, gradient_norm))
+
+
+
+    return x, f, status
+
+
+
+
+
+
+
+
 
 
 

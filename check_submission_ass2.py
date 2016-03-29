@@ -9,7 +9,7 @@ import sys
 
 from lossfuncs import logistic
 
-from optim import cg, gd, newton
+from optim import cg, gd, newton, ncg
 
 ############################################################################################################
 # Check if it's Python 3
@@ -128,7 +128,7 @@ func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
 
 testing_pairs = (
     annotated(gd, func),
-    #annotated(ncg, func),
+    annotated(ncg, func),
     annotated(newton, func_hess),
 )
 
