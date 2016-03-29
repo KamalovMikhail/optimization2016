@@ -75,9 +75,9 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
         direction = -gradient
         alpha = line_search_wolfe2(f=f_0, myfprime=f_1, xk=x, pk=direction, c1=c1, c2=c2)
         if alpha[0] is None:
-            alpha = line_search_armijo(f=f_0, xk=x, pk=direction, gfk=gradient, old_fval=f)
+            alpha = line_search_armijo(f=f_0, xk=x, pk=direction, gfk=gradient, old_fval=f, c1=c1)
 
-        x = x - alpha[0] * gradient
+        x = x + alpha[0] * direction
 
         f, gradient = func(x)
         n_act_evals =+ 1
@@ -85,6 +85,36 @@ def gd(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp
     return x, f, status
 
 
+
+def newton(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, disp=False, trace=False):
+    status, x = 1, np.copy(x0)
+    f_0 = (lambda x: func(x)[0])
+    f_1 = (lambda x: func(x)[1])
+
+    f, gradient, hessian = func(x)
+    n_act_evals = 1
+
+    for k in range(max_iter):
+        if n_act_evals >= max_n_evals:
+            break
+        if norm(gradient, np.inf) < tol:
+            status = 0
+            break
+
+        B = sp.cho_factor(hessian, lower=True, overwrite_a=True)
+        direction = sp.cho_solve(B, -gradient, overwrite_b=True)
+
+        alpha = line_search_wolfe2(f=f_0, myfprime=f_1, xk=x, pk=direction, c1=c1, c2=c2)
+        if alpha[0] is None:
+            alpha = line_search_armijo(f=f_0, xk=x, pk=direction, gfk=gradient, old_fval=f, c1=c1)
+
+
+        x = x + alpha[0] * direction
+
+        f, gradient, hessian = func(x)
+        n_act_evals =+ 1
+
+    return x, f, status
 
 
 
