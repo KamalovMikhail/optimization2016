@@ -6,7 +6,7 @@ from ddt import ddt, data, unpack
 
 from io import StringIO
 import sys
-
+from special import grad_finite_diff, hess_finite_diff
 from lossfuncs import logistic
 
 from optim import cg, gd, newton, ncg
@@ -65,6 +65,32 @@ class TestLogistic(unittest.TestCase):
         self.assertTrue(isinstance(H, np.ndarray))
 
         assert_array_almost_equal(H, [[0.625, 0.0625], [0.0625, 0.625]])
+
+############################################################################################################
+############################################ TestFiniteDiff ################################################
+############################################################################################################
+
+# Define a simple quadratic function
+A = np.array([[1, 0], [0, 2]])
+b = np.array([1, 6])
+phi = (lambda x: (1/2)*x.dot(A.dot(x)) + b.dot(x))
+
+class TestFiniteDiff(unittest.TestCase):
+    def test_grad_finite_diff(self):
+        """Check the function returns a correct gradient."""
+        g = grad_finite_diff(phi, np.array([0, 0]))
+
+        self.assertTrue(isinstance(g, np.ndarray))
+
+        assert_array_almost_equal(g, b)
+
+    def test_hess_finite_diff(self):
+        """Check the function returns a correct Hessian."""
+        H = hess_finite_diff(phi, np.array([0, 0]))
+
+        self.assertTrue(isinstance(H, np.ndarray))
+
+        assert_array_almost_equal(H, A)
 
 ############################################################################################################
 ################################################# TestCG ###################################################

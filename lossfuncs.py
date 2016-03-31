@@ -3,11 +3,12 @@ __author__ = 'mikhail'
 import numpy as np
 import scipy.linalg as sp
 import scipy.special as spes
+import scipy.sparse as sps
 
-X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-y = np.array([1, 1, -1, 1])
-reg_coef = 0.5
-w = np.array([0, 0])
+#X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+#y = np.array([1, 1, -1, 1])
+#reg_coef = 0.5
+#w = np.array([0, 0])
 
 
 
@@ -15,32 +16,33 @@ w = np.array([0, 0])
 
 
 def logistic(w, X, y, reg_coef, hess=False):
-    yc = np.copy(y)
-    Xk = np.copy(X)
-    wc = np.copy(w)
-    n = len(yc)
+    yc, Xk, wc, n = np.copy(y), np.copy(X), np.copy(w), len(y)
+    c = -yc * Xk.dot(wc)
 
     # function
-    fun_val = 1 / n * np.sum(np.log(1 + np.exp((-y * X.T).T[:] * w)), axis=0) + (reg_coef / 2) * np.power(sp.norm(w), 2)
+    fun_val = 1 / n * np.sum(np.logaddexp(np.zeros(len(c)), c)) + (reg_coef / 2) * np.power(sp.norm(wc), 2)
 
     # gradient
-    sigma = spes.expit(-y * X.dot(w))
-    grad = 1 / n * np.sum((-y * X.T * sigma).T, axis=0) + reg_coef * wc
+    sigma = spes.expit(c)
+    grad = 1 / n * np.sum((-yc * Xk.T * sigma).T, axis=0) + reg_coef * wc
 
     # hessian
     if hess:
-        d = sigma * (1 - sigma)
-        D = np.diag(d)
-        hessian = (1 / n) * np.dot(Xk.T, D).dot(X) + np.diag((reg_coef + np.zeros(len(wc)) ))
+        d = np.multiply(sigma, (np.ones(n) - sigma))
+        D = sps.diags(d, offsets=0)
+        hessian = (1 / n) * np.dot(Xk.T, D.dot(Xk)) + reg_coef * np.diag(np.ones(len(wc)), 0)
 
     if hess:
-        return fun_val[0], grad, hessian
+        return fun_val, grad, hessian
     else:
-        return fun_val[0], grad
+        return fun_val, grad
 
-a,b,h = logistic(w, X, y, reg_coef, hess=True)
 
+#a,b,h = logistic(w, X, y, reg_coef, hess=True)
+
+#print(a)
+# key phrase extraction
 #print("!!")
-print(a, b,h)
+#print(a, b,h)
 
-print(h)
+#print(h)

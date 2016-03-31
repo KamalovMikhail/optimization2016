@@ -5,6 +5,7 @@ import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 import time
+import scipy.sparse as sps
 from scipy.optimize.linesearch import line_search_wolfe2,line_search_armijo
 
 ## b = np.array([1, 6])
@@ -247,16 +248,16 @@ def ncg(func, x0, tol=1e-4, max_iter=500, max_n_evals=1000, c1=1e-4, c2=0.1, dis
 
 
 
-A = np.array([[1, 0], [0, 2]])
-b = np.array([1, 6])
-c = 9.5
-x0 = np.array([0, 0])
+#A = np.array([[1, 0], [0, 2]])
+#b = np.array([1, 6])
+#c = 9.5
+#x0 = np.array([0, 0])
 
-func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
-func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
+#func = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b))
+#func_hess = (lambda x: ((1/2)*x.dot(A.dot(x)) - b.dot(x) + c, A.dot(x) - b, A))
 
 
-set_x, func, status, hist = gd(func, x0, disp=True, trace=True)
+#set_x, func, status, hist = gd(func, x0, disp=True, trace=True)
 
 
 
@@ -269,21 +270,23 @@ def draw_plot(k, n, s):
 
     c = 0
     for i in k:
-        for sch in range(1, s):
+        for sch in range(0, s):
             B = np.random.randn(n)
             X0 = np.zeros(n)
             V = sp.orth(np.random.randn(n, n))
-            AL = np.zeros((n, n), float)
-            np.fill_diagonal(AL, np.random.uniform(1, i, n), wrap=True)
-            A = V.dot(AL).dot(V.T)
+            AL = sps.diags(np.random.uniform(1, i, n), 0)
+            A = np.dot(V, AL.dot(V.T))
             x, r, l = cg(matvec, B, X0, disp=True, trace=True)
-
-            plt.semilogy(l['norm_r'], l['it'], color[c], label = 'CG' ,alpha = 0.8)
+            nev = norm(matvec(x) - B)
+            plt.semilogy(l['it'], l['norm_r'] - nev, color[c], label='CG '+str(i), alpha=0.7)
+            plt.xlabel('it')
+            plt.ylabel('norm_r')
+            plt.legend(loc='best')
         c = c + 1
     plt.show()
 
 
-#draw_plot([4, 14, 20], 10, 4)
+#draw_plot([10, 1000, 100000], 1000, 4)
 
 
 
