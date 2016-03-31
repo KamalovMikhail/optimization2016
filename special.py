@@ -1,11 +1,7 @@
 __author__ = 'mikhail'
 
-from lossfuncs import logistic
 import numpy as np
 
-A = np.array([[1, 0], [0, 2]])
-b = np.array([1, 6])
-phi = (lambda x: (1/2)*x.dot(A.dot(x)) + b.dot(x))
 
 def grad_finite_diff(func, x, eps=1e-8):
 
@@ -27,12 +23,8 @@ def hess_finite_diff(func, x, eps=1e-5):
             e2[j], e1[i] = 1, 1
             row = np.append(row, ((func(x + eps * e1 + eps * e2) - func(x + eps * e1) - func(x + eps * e2) + func(x)) / (eps * eps)))
             e1[i], e2[j] = 0, 0
-        print(row)
         hessian = np.append(hessian, np.array([row]), axis=0)
 
     return hessian
 
 
-g = hess_finite_diff(phi, np.array([0, 0]))
-
-print(g)

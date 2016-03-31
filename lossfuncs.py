@@ -4,6 +4,7 @@ import numpy as np
 import scipy.linalg as sp
 import scipy.special as spes
 import scipy.sparse as sps
+from special import grad_finite_diff, hess_finite_diff
 
 #X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 #y = np.array([1, 1, -1, 1])
@@ -36,6 +37,21 @@ def logistic(w, X, y, reg_coef, hess=False):
         return fun_val, grad, hessian
     else:
         return fun_val, grad
+
+
+X = np.random.random((16, 4))
+wc = np.array([0.523, 0.444, -1, 0.222])
+Y = np.array([1, 1, -1, -1, 1, 1, -1, -1, 1, 1, 1, -1, 1, -1, 1, 1])
+
+f, g, h = logistic(w=wc, X=X, y=Y, reg_coef=0.5, hess=True)
+
+print(g)
+print(h)
+
+func = (lambda x: logistic(w=x, X=X, y=Y, reg_coef=0.5)[0])
+print(grad_finite_diff(func, wc))
+print(hess_finite_diff(func, wc))
+
 
 
 #a,b,h = logistic(w, X, y, reg_coef, hess=True)
